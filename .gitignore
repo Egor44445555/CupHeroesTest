@@ -1,0 +1,7 @@
+*.meta
+/Temp
+/UserSettings
+/Logs
+/Library
+/Assets/TextMesh Pro
+*.zip
