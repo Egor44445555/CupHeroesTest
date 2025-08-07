@@ -8,12 +8,17 @@ public class BattleController : MonoBehaviour
     [SerializeField] BattleCharacter player;
     [SerializeField] float checkInterval = 0.2f;
     [SerializeField] LayerMask enemyLayerMask;
-    
+
     bool combatActive = false;
     int currentCharacter = 0;
+    int dieCount = 0;
+    int maxEnemies = 0;
     Rigidbody2D playerRb;
+    Health playerHealth;
     Transform playerTransform;
     bool isProcessingTurn = false;
+    bool lastWave = false;
+    List<BattleCharacter> currentEnemies = new List<BattleCharacter>();
     List<BattleCharacter> characterQueue = new List<BattleCharacter>();
 
     void Awake()
@@ -21,25 +26,21 @@ public class BattleController : MonoBehaviour
         main = this;
         playerTransform = player.transform;
         playerRb = player.GetComponent<Rigidbody2D>();
+        playerHealth = player.GetComponent<Health>();
     }
 
-    void Start()
+    public void StartMove()
     {
         StartCoroutine(EnemyCheck());
     }
-    
+
     IEnumerator EnemyCheck()
     {
         while (true)
         {
             if (!combatActive)
             {
-                var hits = Physics2D.OverlapCircleAll(
-                    playerTransform.position, 
-                    player.visionRange, 
-                    enemyLayerMask);
-                    
-                if (hits.Length > 0)
+                if (currentEnemies.Count > 0)
                 {
                     StartCombat();
                 }
@@ -59,28 +60,41 @@ public class BattleController : MonoBehaviour
         player.StartAnimation("Walk", false);
         characterQueue.Clear();
 
-        var hits = Physics2D.OverlapCircleAll(
-            playerTransform.position, 
-            player.visionRange, 
-            enemyLayerMask);
-
-        if (hits.Length > 0)
+        if (currentEnemies.Count > 0)
         {
             characterQueue.Add(player);
+        }        
 
-            for (int i = 0; i < hits.Length; i++)
+        for (int i = 0; i < currentEnemies.Count; i++)
+        {
+            BattleCharacter character = currentEnemies[i].GetComponent<BattleCharacter>();
+
+            if (!character.GetDeadStatus())
             {
-                characterQueue.Add(hits[i].GetComponent<BattleCharacter>());
+                characterQueue.Add(character);
+            }
+            else
+            {
+                currentEnemies.Remove(currentEnemies[i]);
+                currentCharacter--;
+                dieCount++;
             }
         }
 
-        if (characterQueue.Count > 0)
+        if (dieCount < maxEnemies)
         {
-            BattleCharacter target;
+            BattleCharacter target = player;
 
             if (characterQueue[currentCharacter].characterType == CharacterType.Player)
             {
-                target = characterQueue[1];
+                for (int i = 0; i < characterQueue.Count; i++)
+                {
+                    if (characterQueue[i].characterType == CharacterType.Enemy)
+                    {
+                        target = characterQueue[i];
+                        break;
+                    }
+                }
             }
             else
             {
@@ -90,47 +104,77 @@ public class BattleController : MonoBehaviour
             characterQueue[currentCharacter].StartCombat(CalculateMovementPoints(characterQueue[currentCharacter], target), target.transform);
             combatActive = true;
         }
+        else
+        {
+            Improvement();
+        }
     }
-    
+
     List<Vector3> CalculateMovementPoints(BattleCharacter character, BattleCharacter target)
     {
         List<Vector3> points = new List<Vector3>();
-    
+
         if (character.weaponType == WeaponType.Melee)
         {
             Vector3 startPos = character.transform.position;
             Vector3 endPos = target.transform.position;
             Vector3 direction = (endPos - startPos).normalized;
-            
+
             float totalDistance = Vector3.Distance(startPos, endPos);
             int steps = Mathf.FloorToInt(totalDistance / character.attackRange);
-            
+
             if (steps > 0)
             {
                 float stepDistance = totalDistance / steps;
-                
+
                 for (int i = 1; i < steps; i++)
                 {
                     points.Add(startPos + direction * (stepDistance * i));
                 }
-                
-                // float finalPointDistance = totalDistance * 0.85f;
-                points.Add(startPos + direction * totalDistance);
             }
         }
-        
+
         return points;
     }
 
     public void NextCharacter()
     {
         currentCharacter = currentCharacter < characterQueue.Count - 1 ? currentCharacter + 1 : 0;
-        StartCombat();
+
+        if (currentEnemies.Count > 0)
+        {
+            StartCombat();
+        }        
     }
-    
+
+    void Improvement()
+    {
+        if (!lastWave)
+        {
+            Time.timeScale = 0;
+            combatActive = false;
+            currentEnemies.Clear();
+            UIController.main.OpenUpgradePopup();
+        }
+        else
+        {
+            player.StartAnimation("Victory", true);
+        }
+    }
+
     public void EndCombat()
     {
         combatActive = false;
         currentCharacter = 0;
+        dieCount = 0;
+        maxEnemies = 0;
+        playerHealth.CheckHealth();
+    }
+
+    public void SetEnemies(List<BattleCharacter> enemies, int _maxEnemies, bool _lastWave)
+    {
+        currentEnemies = enemies;
+        maxEnemies = _maxEnemies;
+        lastWave = _lastWave;
     }
 }

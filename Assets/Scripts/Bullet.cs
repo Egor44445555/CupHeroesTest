@@ -3,9 +3,6 @@ using System.Collections;
 
 public class Bullet : MonoBehaviour
 {
-    [Header("Attack settings")]
-    [SerializeField] float bulletDamage = 1;
-
     [Header("Fly settings")]
     [SerializeField] float acceleration = 2f;
     [SerializeField] float flightTime = 10f;
@@ -82,10 +79,9 @@ public class Bullet : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Enemy"))
         {
-            float damage = bulletDamage;
-
+            float damage = UIController.main.GetDamage();
             collision.gameObject.GetComponent<Health>().TakeDamage(damage);
             Destroy(gameObject);
         }
-    } 
+    }
 }

@@ -2,25 +2,37 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class Health : MonoBehaviour
 {
-    [SerializeField] public float maxHitPoint = 2f;
+    [SerializeField] float maxHitPoint;
     [SerializeField] public GameObject healthBlock;
     [SerializeField] public Image healthBar;
-    [SerializeField] float hitPoint = 2f;
+    [SerializeField] TextMeshProUGUI healthCount;
+    [SerializeField] TextMeshProUGUI damageCount;
+    [SerializeField] GameObject dropCoin;
 
+    float hitPoint = 2f;
     bool isDestroyed = false;
     Animator anim;
+    Animator countAnim;
+    BattleCharacter battleCharacter;
+    bool isPlayingAnimation;
 
     void Start()
     {
+        battleCharacter = GetComponent<BattleCharacter>();
         anim = GetComponent<Animator>();
-        hitPoint = maxHitPoint;
+        countAnim = damageCount.GetComponent<Animator>();
+        CheckHealth(true);
     }
 
     public void TakeDamage(float dmg)
     {
+        damageCount.text = dmg.ToString();
+        countAnim.SetBool("TakeDamage", true);
+        isPlayingAnimation = true;
         hitPoint -= dmg;
         healthBar.fillAmount = hitPoint / maxHitPoint;
 
@@ -31,14 +43,45 @@ public class Health : MonoBehaviour
 
         if (hitPoint <= 0 && !isDestroyed)
         {
+            if (dropCoin != null)
+            {
+                Instantiate(dropCoin, transform.position, transform.rotation);
+            }
+
             isDestroyed = true;
-            BattleController.main.NextCharacter();
+            battleCharacter.IsDead();
+            battleCharacter.NextCharacter();
             anim.SetBool("Die", true);
         }
+
+        CheckHealth();
+    }
+
+    public bool GetDestroy()
+    {
+        return isDestroyed;
     }
 
     public void DestroyObject()
     {
         Destroy(gameObject);
+    }
+
+    public void CheckHealth(bool startValue = false)
+    {        
+        if (battleCharacter.characterType == CharacterType.Player)
+        {
+            maxHitPoint = UIController.main.GetMaxHealth();
+        }
+
+        if (startValue)
+        {
+            hitPoint = maxHitPoint;
+        }
+
+        if (healthCount != null)
+        {
+            healthCount.text = hitPoint.ToString() + "/" + maxHitPoint.ToString();
+        }        
     }
 }
