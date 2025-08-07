@@ -11,8 +11,9 @@ public class BattleCharacter : MonoBehaviour
     public WeaponType weaponType;
     public float moveSpeed = 3f;
     public float attackRange = 1f;
-    public int speedAttack = 1;
-    public float meleeDamage = 5f;
+    
+    [SerializeField] int speedAttack = 1;
+    [SerializeField] float meleeDamage = 5f;
 
     [SerializeField] Transform bulletCreatePoint;
     [SerializeField] GameObject bulletPrefab;
@@ -32,6 +33,11 @@ public class BattleCharacter : MonoBehaviour
 
     public void StartCombat(List<Vector3> points, Transform target)
     {
+        if (characterType == CharacterType.Player)
+        {
+            speedAttack = UIController.main.GetSpeedAttack();
+        }
+        
         inCombat = false;
         currentTarget = target;
 
@@ -53,6 +59,7 @@ public class BattleCharacter : MonoBehaviour
 
     public void MoveToNextPoint()
     {
+        anim.SetBool("Attack", false);
         anim.SetBool("Walk", true);
 
         if (currentMovementPoint <= movementPoints.Count - 1)
@@ -63,7 +70,15 @@ public class BattleCharacter : MonoBehaviour
         else
         {
             anim.SetBool("Walk", false);
-            anim.SetBool("Attack", true);
+
+            if (BattleController.main.IsCombatActive())
+            {
+                anim.SetBool("Attack", true);
+            }
+            else
+            {
+                NextCharacter();
+            }
         }
     }
 
@@ -114,16 +129,16 @@ public class BattleCharacter : MonoBehaviour
     {
         if (fireCount >= speedAttack - 1)
         {
+            fireCount = 0;
             currentTarget = null;
             anim.SetBool("Walk", false);
             anim.SetBool("Attack", false);
             BattleController.main.NextCharacter();
-            fireCount = 0;
         }
         else if (currentTarget != null)
         {
+            BattleController.main.StartCombat();
             fireCount++;
-            MoveToNextPoint();
         }
     }
 

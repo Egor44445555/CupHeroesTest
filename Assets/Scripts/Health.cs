@@ -50,7 +50,6 @@ public class Health : MonoBehaviour
 
             isDestroyed = true;
             battleCharacter.IsDead();
-            battleCharacter.NextCharacter();
             anim.SetBool("Die", true);
         }
 
@@ -68,7 +67,7 @@ public class Health : MonoBehaviour
     }
 
     public void CheckHealth(bool startValue = false)
-    {        
+    {
         if (battleCharacter.characterType == CharacterType.Player)
         {
             maxHitPoint = UIController.main.GetMaxHealth();
@@ -79,9 +78,21 @@ public class Health : MonoBehaviour
             hitPoint = maxHitPoint;
         }
 
+        hitPoint = hitPoint < 0 ? 0 : hitPoint;
+
         if (healthCount != null)
         {
             healthCount.text = hitPoint.ToString() + "/" + maxHitPoint.ToString();
-        }        
+        }
+    }
+
+    public void IncreaseHealth(int amount)
+    {
+        if (battleCharacter.characterType == CharacterType.Player)
+        {
+            maxHitPoint = amount;
+            hitPoint = maxHitPoint;
+            healthBar.fillAmount = 1f;
+        }
     }
 }

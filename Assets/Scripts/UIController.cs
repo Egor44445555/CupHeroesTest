@@ -12,7 +12,6 @@ public class UIController : MonoBehaviour
     [SerializeField] TextMeshProUGUI speedAttackCount;
 
     [Header("Upgrade Cards settings")]
-    [SerializeField] GameObject upgradeCardsPopup;
     [SerializeField] TextMeshProUGUI upgradeDamageCardCount;
     [SerializeField] TextMeshProUGUI upgradeSpeedAttackCardCount;
     [SerializeField] TextMeshProUGUI upgradeMaxHealthCardCount;
@@ -23,9 +22,15 @@ public class UIController : MonoBehaviour
     [SerializeField] int currentSpeedAttack = 1;
     [SerializeField] int currentMaxHealth = 30;
 
+    [Header("Popups")]
+    [SerializeField] GameObject upgradeCardsPopup;
+    [SerializeField] GameObject victoryPopup;
+
     int increaseDamage = 0;
     int increaseSpeedAttack = 0;
     int increaseMaxHealth = 0;
+    BattleCharacter player;
+    Health playerHealth;
 
     void Awake()
     {
@@ -34,6 +39,9 @@ public class UIController : MonoBehaviour
 
     void Start()
     {
+        player = BattleController.main.GetPlayer();
+        playerHealth = player.GetComponent<Health>();
+
         if (coinCount != null)
         {
             coinCount.text = currentCoins.ToString();
@@ -127,6 +135,10 @@ public class UIController : MonoBehaviour
         }
     }
 
+    public void OpenVictoryPopup()
+    {
+        victoryPopup.SetActive(true);
+    }
     public void OpenUpgradePopup()
     {
         upgradeCardsPopup.SetActive(true);
@@ -147,6 +159,7 @@ public class UIController : MonoBehaviour
     public void UpgradeMaxHealth()
     {
         IncreaseMaxHealth(increaseMaxHealth);
+        playerHealth.IncreaseHealth(currentMaxHealth);
         Upgrade();
     }
 
@@ -155,5 +168,17 @@ public class UIController : MonoBehaviour
         upgradeCardsPopup.SetActive(false);
         BattleController.main.EndCombat();
         Time.timeScale = 1;
+    }
+
+    public void RestartLevel()
+    {
+        UnityEngine.SceneManagement.SceneManager.LoadScene(
+            UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex
+        );
+    }
+
+    public void ExitGame()
+    {
+        Application.Quit();
     }
 }

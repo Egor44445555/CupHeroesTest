@@ -11,7 +11,6 @@ public class BattleController : MonoBehaviour
 
     bool combatActive = false;
     int currentCharacter = 0;
-    int dieCount = 0;
     int maxEnemies = 0;
     Rigidbody2D playerRb;
     Health playerHealth;
@@ -54,7 +53,7 @@ public class BattleController : MonoBehaviour
         }
     }
 
-    void StartCombat()
+    public void StartCombat()
     {
         playerRb.linearVelocity = Vector2.zero;
         player.StartAnimation("Walk", false);
@@ -63,36 +62,40 @@ public class BattleController : MonoBehaviour
         if (currentEnemies.Count > 0)
         {
             characterQueue.Add(player);
-        }        
+        }
 
         for (int i = 0; i < currentEnemies.Count; i++)
         {
-            BattleCharacter character = currentEnemies[i].GetComponent<BattleCharacter>();
+            if (currentEnemies[i] != null)
+            {
+                BattleCharacter character = currentEnemies[i].GetComponent<BattleCharacter>();
 
-            if (!character.GetDeadStatus())
-            {
-                characterQueue.Add(character);
-            }
-            else
-            {
-                currentEnemies.Remove(currentEnemies[i]);
-                currentCharacter--;
-                dieCount++;
+                if (!character.GetDeadStatus())
+                {
+                    characterQueue.Add(character);
+                }
             }
         }
 
-        if (dieCount < maxEnemies)
+        characterQueue.RemoveAll(c => c == null || c.GetDeadStatus());
+
+        if (characterQueue.Count == 0)
         {
-            BattleCharacter target = player;
+            Improvement();
+            return;
+        }
+
+        if (characterQueue.Count > 1)
+        {
+            BattleCharacter target = null;
 
             if (characterQueue[currentCharacter].characterType == CharacterType.Player)
             {
                 for (int i = 0; i < characterQueue.Count; i++)
                 {
-                    if (characterQueue[i].characterType == CharacterType.Enemy)
+                    if (characterQueue[i].characterType == CharacterType.Enemy && !characterQueue[i].GetComponent<Health>().GetDestroy())
                     {
                         target = characterQueue[i];
-                        break;
                     }
                 }
             }
@@ -101,8 +104,11 @@ public class BattleController : MonoBehaviour
                 target = player;
             }
 
-            characterQueue[currentCharacter].StartCombat(CalculateMovementPoints(characterQueue[currentCharacter], target), target.transform);
-            combatActive = true;
+            if (target != null)
+            {
+                characterQueue[currentCharacter].StartCombat(CalculateMovementPoints(characterQueue[currentCharacter], target), target.transform);
+                combatActive = true;
+            }
         }
         else
         {
@@ -144,7 +150,7 @@ public class BattleController : MonoBehaviour
         if (currentEnemies.Count > 0)
         {
             StartCombat();
-        }        
+        }
     }
 
     void Improvement()
@@ -159,6 +165,7 @@ public class BattleController : MonoBehaviour
         else
         {
             player.StartAnimation("Victory", true);
+            UIController.main.OpenVictoryPopup();
         }
     }
 
@@ -166,7 +173,6 @@ public class BattleController : MonoBehaviour
     {
         combatActive = false;
         currentCharacter = 0;
-        dieCount = 0;
         maxEnemies = 0;
         playerHealth.CheckHealth();
     }
@@ -176,5 +182,15 @@ public class BattleController : MonoBehaviour
         currentEnemies = enemies;
         maxEnemies = _maxEnemies;
         lastWave = _lastWave;
+    }
+
+    public bool IsCombatActive()
+    {
+        return combatActive;
+    }
+
+    public BattleCharacter GetPlayer()
+    {
+        return player;
     }
 }

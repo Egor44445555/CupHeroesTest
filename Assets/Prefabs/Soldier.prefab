@@ -1172,7 +1172,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 417fa63e0e7920242bd31c69765496bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHitPoint: 20
+  maxHitPoint: 15
   healthBlock: {fileID: 5587846122364680055}
   healthBar: {fileID: 6024165841839112590}
   healthCount: {fileID: 5228475767118861967}
@@ -1195,7 +1195,7 @@ MonoBehaviour:
   moveSpeed: 1
   attackRange: 1.3
   speedAttack: 1
-  meleeDamage: 5
+  meleeDamage: 1
   bulletCreatePoint: {fileID: 0}
   bulletPrefab: {fileID: 0}
 --- !u!1 &8040157350498812185
