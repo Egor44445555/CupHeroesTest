@@ -1,16 +1,44 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Health : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    [SerializeField] public float maxHitPoint = 2f;
+    [SerializeField] public GameObject healthBlock;
+    [SerializeField] public Image healthBar;
+    [SerializeField] float hitPoint = 2f;
+
+    bool isDestroyed = false;
+    Animator anim;
+
     void Start()
     {
-        
+        anim = GetComponent<Animator>();
+        hitPoint = maxHitPoint;
     }
 
-    // Update is called once per frame
-    void Update()
+    public void TakeDamage(float dmg)
     {
-        
+        hitPoint -= dmg;
+        healthBar.fillAmount = hitPoint / maxHitPoint;
+
+        if (hitPoint < maxHitPoint)
+        {
+            healthBlock.SetActive(true);
+        }
+
+        if (hitPoint <= 0 && !isDestroyed)
+        {
+            isDestroyed = true;
+            BattleController.main.NextCharacter();
+            anim.SetBool("Die", true);
+        }
+    }
+
+    public void DestroyObject()
+    {
+        Destroy(gameObject);
     }
 }
